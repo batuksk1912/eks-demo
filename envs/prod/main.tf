@@ -2,9 +2,14 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    aws    = "~> 5.0"
-    helm   = "~> 2.11"
+    aws        = "~> 5.0"
+    helm       = "~> 2.11"
     kubernetes = "~> 2.31"
+    http       = "~> 3.2"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.81.0"
+    }
   }
 }
 
@@ -38,6 +43,9 @@ module "eks" {
   cluster_version = "1.29"
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
+
+  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access = true
 
   eks_managed_node_groups = {
     spot_small = {
@@ -106,9 +114,19 @@ resource "aws_iam_role" "lb_ctlr" {
   assume_role_policy = data.aws_iam_policy_document.lb_ctlr_assume.json
 }
 
+# Download official JSON policy from the controller repo
+data "http" "lb_ctlr_policy_doc" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.1/docs/install/iam_policy.json"
+}
+
+resource "aws_iam_policy" "lb_ctlr" {
+  name   = "AWSLoadBalancerControllerIAMPolicy"
+  policy = data.http.lb_ctlr_policy_doc.response_body
+}
+
 resource "aws_iam_role_policy_attachment" "lb_ctlr_attach" {
   role       = aws_iam_role.lb_ctlr.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.lb_ctlr.arn         # ← attach custom policy
 }
 
 #################### Helm – AWS LB Controller #####
