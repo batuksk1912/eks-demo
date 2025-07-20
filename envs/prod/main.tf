@@ -65,6 +65,17 @@ module "eks" {
       capacity_type  = "SPOT"
     }
   }
+
+  manage_aws_auth_configmap = true
+  authentication_mode       = "API_AND_CONFIG_MAP"
+
+  access_entries = [
+    {
+      principal_arn     = var.aws_role_arn
+      kubernetes_groups = ["system:masters"]
+      username          = "github-actions"
+    }
+  ]
 }
 
 ########################  EKS DESCRIPTOR  ########################
@@ -90,22 +101,6 @@ provider "kubernetes" {
       "--cluster-name", module.eks.cluster_name,
       "--region", var.aws_region]
   }
-}
-
-############## AWS‑AUTH CONFIGMAP ############
-module "aws_auth" {
-  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
-  version = "20.37.2"
-
-  manage_aws_auth_configmap = true
-
-  aws_auth_roles = [
-    {
-      rolearn  = var.aws_role_arn
-      username = "github"
-      groups   = ["system:masters"]
-    }
-  ]
 }
 
 ################ IAM for LB Controller ############
@@ -162,7 +157,6 @@ provider "helm" {
 }
 
 resource "helm_release" "lb_controller" {
-  depends_on = [module.aws_auth]
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -203,7 +197,6 @@ data "aws_acm_certificate" "app_cert" {
 
 ################################  HELM SITE  ##########################
 resource "helm_release" "nginx" {
-  depends_on = [module.aws_auth]
   name       = "demo-site"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "nginx"
