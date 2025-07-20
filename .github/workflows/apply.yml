@@ -10,7 +10,7 @@ permissions:
 env:
   TF_LOG: INFO                         # verbose provider calls
   TF_LOG_PATH: tf.log                  # artefact file
-  TF_CLI_ARGS: "-lock-timeout=60s -parallelism=25"  # fast & safe
+  TF_CLI_ARGS: "-lock-timeout=60s" # fast & safe
 
 jobs:
   apply:
@@ -53,7 +53,7 @@ jobs:
           ( while true; do sleep 60; echo "::notice::tick $(date -u)"; done ) &
           keep=$!
           
-          terraform apply -auto-approve | tee /tmp/tf.out
+          terraform apply -auto-approve  -parallelism=25 | tee /tmp/apply.out
           status=$?
           
           kill $keep || true
