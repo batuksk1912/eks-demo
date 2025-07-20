@@ -66,15 +66,15 @@ module "eks" {
     }
   }
 
-  authentication_mode       = "API_AND_CONFIG_MAP"
+  authentication_mode = "API_AND_CONFIG_MAP"
 
-  access_entries = [
-    {
+  access_entries = {
+    github_actions = {
       principal_arn     = var.aws_role_arn
       kubernetes_groups = ["system:masters"]
       username          = "github-actions"
     }
-  ]
+  }
 }
 
 ########################  EKS DESCRIPTOR  ########################

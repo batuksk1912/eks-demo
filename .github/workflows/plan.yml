@@ -1,8 +1,5 @@
 name: terraform plan
-on:
-  push:
-    branches:
-      - main
+on: pull_request
 permissions: { contents: read, id-token: write }
 
 jobs:
