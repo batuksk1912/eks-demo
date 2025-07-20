@@ -46,9 +46,11 @@ jobs:
             -backend-config="region=$TF_VAR_aws_region" \
             -backend-config="dynamodb_table=$TF_VAR_tf_state_table"
 
-      - name: Remove all Kubernetes resources from state
+      - name: Forget Kubernetes resources
         working-directory: envs/prod
-        run: terraform state rm 'kubernetes_*' || true
+        run: |
+          terraform state list | grep '^kubernetes_' | \
+            xargs -r -n1 terraform state rm
 
       # ───── Destroy only the EKS module ─────
       - name: Terraform destroy (cluster only)
