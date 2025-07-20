@@ -217,7 +217,7 @@ resource "helm_release" "nginx" {
     ingress = {
       enabled            = true
       ingressClassName   = "alb"
-      hosts              = [ "app.baturaykayaturk.com" ]
+      hosts              = "app.baturaykayaturk.com"
       annotations = {
         "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
         "alb.ingress.kubernetes.io/target-type"     = "ip"
