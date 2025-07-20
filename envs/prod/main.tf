@@ -82,7 +82,13 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.eks.endpoint
   cluster_ca_certificate = base64decode(
     data.aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token",
+      "--cluster-name", module.eks.cluster_name,
+      "--region", var.aws_region]
+  }
 }
 
 ############## AWS‑AUTH CONFIGMAP ############
@@ -135,7 +141,7 @@ resource "aws_iam_policy" "lb_ctlr" {
 
 resource "aws_iam_role_policy_attachment" "lb_ctlr_attach" {
   role       = aws_iam_role.lb_ctlr.name
-  policy_arn = aws_iam_policy.lb_ctlr.arn         # ← attach custom policy
+  policy_arn = aws_iam_policy.lb_ctlr.arn
 }
 
 #################### Helm – AWS LB Controller #####
@@ -144,7 +150,13 @@ provider "helm" {
     host                   = data.aws_eks_cluster.eks.endpoint
     cluster_ca_certificate = base64decode(
       data.aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token",
+        "--cluster-name", module.eks.cluster_name,
+        "--region", var.aws_region]
+    }
   }
 }
 
