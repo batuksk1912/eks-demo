@@ -21,7 +21,7 @@ module "vpc" {
 ################################  EKS  ################################
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.4.0"
+  version = "20.37.2"
 
   cluster_name    = "hiive-demo"
   cluster_version = "1.29"
@@ -47,8 +47,8 @@ module "eks" {
 
 ################################  ALB ADD‑ON  #########################
 module "addons" {
-  source  = "terraform-aws-modules/eks/aws//modules/addons"
-  version = "21.4.0"
+  source  = "terraform-aws-modules/eks/aws//modules/kubernetes-addons"
+  version = "20.37.2"
   cluster_name = module.eks.cluster_name
   region       = var.aws_region
 
