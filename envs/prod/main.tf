@@ -72,9 +72,13 @@ module "eks" {
 
   access_entries = {
     github_actions = {
-      principal_arn     = var.aws_role_arn          # GitHub OIDC role
-      kubernetes_groups = ["cluster-admins"]        # ← valid, not reserved
-      username          = "github-actions"
+      principal_arn     = var.aws_role_arn
+      policy_associations = {
+        admin = {
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
+        }
+      }
     }
   }
 }
@@ -141,22 +145,6 @@ resource "aws_iam_role_policy_attachment" "lb_ctlr_attach" {
   policy_arn = aws_iam_policy.lb_ctlr.arn
 }
 
-resource "kubernetes_cluster_role_binding" "cluster_admins" {
-  metadata { name = "cluster-admins" }
-
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "ClusterRole"
-    name      = "cluster-admin"
-  }
-
-  subject {
-    kind      = "Group"
-    name      = "cluster-admins"
-    api_group = "rbac.authorization.k8s.io"
-  }
-}
-
 #################### Helm – AWS LB Controller #####
 provider "helm" {
   kubernetes {
@@ -174,7 +162,6 @@ provider "helm" {
 }
 
 resource "helm_release" "lb_controller" {
-  depends_on = [kubernetes_cluster_role_binding.cluster_admins]
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -215,7 +202,6 @@ data "aws_acm_certificate" "app_cert" {
 
 ################################  HELM SITE  ##########################
 resource "helm_release" "nginx" {
-  depends_on = [kubernetes_cluster_role_binding.cluster_admins]
   name       = "demo-site"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "nginx"
