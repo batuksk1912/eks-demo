@@ -1,21 +1,23 @@
 name: terraform apply
 on:
   push:
-    tags: ["v*"]          # git tag v0.1.0 -> deploy
+    tags: ["v*"]          # git tag v0.1.0 → deploy
 
 permissions:
   contents: read
-  id-token: write         # needed for OIDC -> STS
+  id-token: write         # OIDC → STS
 
 env:
-  TF_LOG: INFO             # ← prints every AWS/Helm call
-  TF_LOG_PATH: tf.log
+  TF_LOG: INFO                         # verbose provider calls
+  TF_LOG_PATH: tf.log                  # artefact file
+  TF_CLI_ARGS: "-lock-timeout=60s -parallelism=25"  # fast & safe
 
 jobs:
   apply:
     runs-on: ubuntu-latest
 
     steps:
+      # ───────────── Git checkout & tools ─────────────
       - uses: actions/checkout@v4
 
       - uses: hashicorp/setup-terraform@v3
@@ -25,20 +27,42 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region:     ${{ vars.AWS_REGION }}
 
-      - name: Clean .terraform cache
+      # ───────────── Clean local cache ────────────────
+      - name: Clean Terraform cache
         run: |
           cd envs/prod
           rm -rf .terraform
           rm -f  .terraform.lock.hcl
 
+      # ───────────── Init backend (upgrade) ───────────
       - name: Terraform Init
         run: |
           cd envs/prod
-          terraform init \
+          terraform init -upgrade \
             -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="dynamodb_table=${{ vars.TF_STATE_TABLE }}"
+            -backend-config="dynamodb_table=${{ vars.TF_STATE_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
 
+      # ───────────── Apply with heartbeat ─────────────
       - name: Terraform Apply
         run: |
+          set -euo pipefail
           cd envs/prod
-          terraform apply -auto-approve
+          
+          # background keep‑alive to prevent log silence
+          ( while true; do sleep 60; echo "::notice::tick $(date -u)"; done ) &
+          keep=$!
+          
+          terraform apply -auto-approve | tee /tmp/tf.out
+          status=$?
+          
+          kill $keep || true
+          exit $status
+
+      # ───────────── Upload full TF log ───────────────
+      - name: Upload tf.log artefact
+        if: always()          # upload even on failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-log
+          path: envs/prod/tf.log
