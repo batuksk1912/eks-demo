@@ -1,9 +1,7 @@
 # .github/workflows/destroy.yml
 name: Destroy EKS demo
 
-on:
-  push:
-    branches: [main]        # run whenever main is updated
+on: workflow_dispatch
 
 permissions:
   contents: read
