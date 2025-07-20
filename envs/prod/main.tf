@@ -54,7 +54,7 @@ module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.37.2"
 
-  cluster_name = module.eks.cluster_name
+  eks_cluster_id = module.eks.cluster_id
 
   aws_auth_roles = [
     {
