@@ -71,7 +71,7 @@ module "eks" {
   access_entries = {
     github_actions = {
       principal_arn     = var.aws_role_arn
-      kubernetes_groups = ["system:masters"]
+      kubernetes_groups = ["cluster-admins"]
       username          = "github-actions"
     }
   }
