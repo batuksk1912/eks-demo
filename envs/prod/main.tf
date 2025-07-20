@@ -66,6 +66,8 @@ module "eks" {
     }
   }
 
+  enable_cluster_creator_admin_permissions = true
+
   authentication_mode = "API_AND_CONFIG_MAP"
 
   access_entries = {
@@ -174,6 +176,7 @@ provider "helm" {
 }
 
 resource "helm_release" "lb_controller" {
+  depends_on = [module.eks]
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -214,6 +217,7 @@ data "aws_acm_certificate" "app_cert" {
 
 ################################  HELM SITE  ##########################
 resource "helm_release" "nginx" {
+  depends_on = [module.eks]
   name       = "demo-site"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "nginx"
