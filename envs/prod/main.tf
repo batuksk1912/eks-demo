@@ -47,7 +47,7 @@ module "eks" {
 
 ################################  ALB ADD‑ON  #########################
 module "addons" {
-  source       = "terraform-aws-modules/eks/aws//modules/kubernetes-addons"
+  source  = "terraform-aws-modules/eks/aws//modules/addons"
   version = "20.37.2"
   cluster_name = module.eks.cluster_name
   region       = var.aws_region
