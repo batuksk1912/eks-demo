@@ -21,6 +21,11 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region:     ${{ vars.AWS_REGION }}
 
+      - name: Clean .terraform cache
+        run: |
+          cd envs/prod
+          rm -rf .terraform
+
       - name: Terraform Init
         run: |
           cd envs/prod
