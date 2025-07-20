@@ -66,7 +66,6 @@ module "eks" {
     }
   }
 
-  manage_aws_auth_configmap = true
   authentication_mode       = "API_AND_CONFIG_MAP"
 
   access_entries = [
