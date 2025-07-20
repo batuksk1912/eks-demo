@@ -25,6 +25,7 @@ jobs:
         run: |
           cd envs/prod
           rm -rf .terraform
+          rm -f  .terraform.lock.hcl
 
       - name: Terraform Init
         run: |
