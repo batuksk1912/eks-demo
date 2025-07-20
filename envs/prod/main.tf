@@ -49,10 +49,21 @@ module "eks" {
   }
 }
 
+########################  EKS DESCRIPTOR  ########################
+data "aws_eks_cluster" "eks" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
+}
+
+########################  KUBERNETES PROVIDER  ###################
 provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = module.eks.cluster_token
+  host                   = data.aws_eks_cluster.eks.endpoint
+  cluster_ca_certificate = base64decode(
+    data.aws_eks_cluster.eks.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.eks.token
 }
 
 ############## AWS‑AUTH CONFIGMAP ############
@@ -101,9 +112,10 @@ resource "aws_iam_role_policy_attachment" "lb_ctlr_attach" {
 #################### Helm – AWS LB Controller #####
 provider "helm" {
   kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = module.eks.cluster_token
+    host                   = data.aws_eks_cluster.eks.endpoint
+    cluster_ca_certificate = base64decode(
+      data.aws_eks_cluster.eks.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.eks.token
   }
 }
 
