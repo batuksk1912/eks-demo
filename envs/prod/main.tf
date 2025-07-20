@@ -49,7 +49,7 @@ module "eks" {
   version = "20.37.2"
 
   cluster_name    = "hiive-eks-demo"
-  cluster_version = "1.30"
+  cluster_version = "1.33"
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
@@ -97,14 +97,28 @@ data "aws_eks_cluster_auth" "eks" {
 ########################  KUBERNETES PROVIDER  ###################
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(
-    data.aws_eks_cluster.eks.certificate_authority[0].data)
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
     args        = ["eks", "get-token",
       "--cluster-name", module.eks.cluster_name,
       "--region", var.aws_region]
+  }
+}
+
+########################  HELM PROVIDER  ###################
+provider "helm" {
+  kubernetes {
+    host                   = data.aws_eks_cluster.eks.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token",
+        "--cluster-name", module.eks.cluster_name,
+        "--region", var.aws_region]
+    }
   }
 }
 
@@ -125,14 +139,14 @@ data "aws_iam_policy_document" "lb_ctlr_assume" {
   }
 }
 
-resource "aws_iam_role" "lb_ctlr" {
-  name               = "AWSLoadBalancerControllerRole"
-  assume_role_policy = data.aws_iam_policy_document.lb_ctlr_assume.json
-}
-
 # Download official JSON policy from the controller repo
 data "http" "lb_ctlr_policy_doc" {
   url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.1/docs/install/iam_policy.json"
+}
+
+resource "aws_iam_role" "lb_ctlr" {
+  name               = "AWSLoadBalancerControllerRole"
+  assume_role_policy = data.aws_iam_policy_document.lb_ctlr_assume.json
 }
 
 resource "aws_iam_policy" "lb_ctlr" {
@@ -145,22 +159,7 @@ resource "aws_iam_role_policy_attachment" "lb_ctlr_attach" {
   policy_arn = aws_iam_policy.lb_ctlr.arn
 }
 
-#################### Helm – AWS LB Controller #####
-provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(
-      data.aws_eks_cluster.eks.certificate_authority[0].data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token",
-        "--cluster-name", module.eks.cluster_name,
-        "--region", var.aws_region]
-    }
-  }
-}
-
+#################### Helm – AWS LB Controller ####################
 resource "helm_release" "lb_controller" {
   depends_on = [module.eks]
   name       = "aws-load-balancer-controller"

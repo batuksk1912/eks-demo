@@ -1,0 +1,59 @@
+# .github/workflows/destroy.yml
+name: Destroy EKS demo
+
+on:
+  push:
+    branches: [main]        # run whenever main is updated
+
+permissions:
+  contents: read
+  id-token: write           # OIDC → STS
+
+env:                        # pass backend + TF variables
+  TF_VAR_aws_region:       ${{ vars.AWS_REGION }}
+  TF_VAR_aws_role_arn:     ${{ vars.AWS_ROLE_ARN }}
+  TF_VAR_tf_state_bucket:  ${{ vars.TF_STATE_BUCKET }}
+  TF_VAR_tf_state_table:   ${{ vars.TF_STATE_TABLE }}
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    concurrency: destroy-prod
+
+    steps:
+      # ───── Git checkout & tools ─────
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region:     ${{ vars.AWS_REGION }}
+
+      - name: Clean Terraform cache
+        run: |
+          cd envs/prod
+          rm -rf .terraform
+          rm -f  .terraform.lock.hcl 
+
+      # ───── Terraform init & state‑rm ─────
+      - name: Terraform init (backend)
+        working-directory: envs/prod
+        run: |
+          terraform init \
+            -backend-config="bucket=$TF_VAR_tf_state_bucket" \
+            -backend-config="key=prod/terraform.tfstate" \
+            -backend-config="region=$TF_VAR_aws_region" \
+            -backend-config="dynamodb_table=$TF_VAR_tf_state_table"
+
+      - name: Remove all Kubernetes resources from state
+        working-directory: envs/prod
+        run: terraform state rm 'kubernetes_*' || true
+
+      # ───── Destroy only the EKS module ─────
+      - name: Terraform destroy (cluster only)
+        working-directory: envs/prod
+        run: terraform destroy -auto-approve
+
+
+
