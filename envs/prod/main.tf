@@ -77,6 +77,24 @@ module "eks" {
   }
 }
 
+resource "kubernetes_cluster_role_binding" "cluster_admins" {
+  metadata {
+    name = "cluster-admins-binding"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+
+  subject {
+    kind      = "Group"
+    name      = "cluster-admins"
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
 ########################  EKS DESCRIPTOR  ########################
 data "aws_eks_cluster" "eks" {
   name = module.eks.cluster_name
