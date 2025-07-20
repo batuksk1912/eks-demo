@@ -7,10 +7,14 @@ permissions:
   contents: read
   id-token: write         # needed for OIDC -> STS
 
+env:
+  TF_LOG: INFO             # ← prints every AWS/Helm call
+  TF_LOG_PATH: tf.log
+
 jobs:
   apply:
     runs-on: ubuntu-latest
-    environment: production           # ← move it here
+
     steps:
       - uses: actions/checkout@v4
 
