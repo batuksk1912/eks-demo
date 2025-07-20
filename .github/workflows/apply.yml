@@ -8,9 +8,11 @@ permissions:
   id-token: write         # OIDC → STS
 
 env:
-  TF_LOG: INFO                         # verbose provider calls
-  TF_LOG_PATH: tf.log                  # artefact file
-  TF_CLI_ARGS: "-lock-timeout=60s" # fast & safe
+  TF_LOG: INFO
+  TF_LOG_PATH: tf.log
+  TF_CLI_ARGS: "-lock-timeout=60s"
+  TF_VAR_aws_role_arn: ${{ vars.AWS_ROLE_ARN }}
+  TF_VAR_aws_region:   ${{ vars.AWS_REGION }}
 
 jobs:
   apply:
@@ -53,14 +55,14 @@ jobs:
           ( while true; do sleep 60; echo "::notice::tick $(date -u)"; done ) &
           keep=$!
           
-          terraform apply -auto-approve  -parallelism=25 | tee /tmp/apply.out
+          terraform apply -auto-approve  -parallelism=25 -input=false | tee /tmp/apply.out
           status=$?
           
           kill $keep || true
           exit $status
 
       # ───────────── Upload full TF log ───────────────
-      - name: Upload tf.log artefact
+      - name: Upload tf.log artifacts
         if: always()          # upload even on failure
         uses: actions/upload-artifact@v4
         with:
