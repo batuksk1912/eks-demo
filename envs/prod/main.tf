@@ -234,7 +234,8 @@ resource "helm_release" "nginx" {
         "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
         "alb.ingress.kubernetes.io/target-type"     = "ip"
         "alb.ingress.kubernetes.io/certificate-arn" = data.aws_acm_certificate.app_cert.arn
-        "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
+        "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\":80},{\"HTTPS\":443}]"
+        "alb.ingress.kubernetes.io/ssl-redirect"  = "443"
       }
     }
   })]
