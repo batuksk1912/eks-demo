@@ -49,12 +49,18 @@ module "eks" {
   }
 }
 
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = module.eks.cluster_token
+}
+
 ############## AWS‑AUTH CONFIGMAP ############
 module "aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "20.37.2"
 
-  eks_cluster_id = module.eks.cluster_id
+  manage_aws_auth_configmap = true
 
   aws_auth_roles = [
     {
