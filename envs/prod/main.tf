@@ -55,6 +55,7 @@ module "eks" {
 
   cluster_endpoint_public_access  = true
   cluster_endpoint_private_access = true
+  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
   eks_managed_node_groups = {
     spot_small = {
@@ -161,6 +162,7 @@ provider "helm" {
 }
 
 resource "helm_release" "lb_controller" {
+  depends_on = [module.aws_auth]
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -201,6 +203,7 @@ data "aws_acm_certificate" "app_cert" {
 
 ################################  HELM SITE  ##########################
 resource "helm_release" "nginx" {
+  depends_on = [module.aws_auth]
   name       = "demo-site"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "nginx"
