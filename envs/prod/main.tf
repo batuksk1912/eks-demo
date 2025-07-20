@@ -39,7 +39,7 @@ module "eks" {
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
-  manage_aws_auth_configmap = true
+  create_aws_auth_configmap = true
   aws_auth_roles = [{
     rolearn  = var.aws_role_arn
     username = "github"
