@@ -46,6 +46,12 @@ jobs:
             -backend-config="region=$TF_VAR_aws_region" \
             -backend-config="dynamodb_table=$TF_VAR_tf_state_table"
 
+      - name: Forget Helm releases
+        working-directory: envs/prod
+        run: |
+          terraform state list | grep '^helm_release\.' | \
+            xargs -r -n1 terraform state rm     
+
       - name: Forget Kubernetes resources
         working-directory: envs/prod
         run: |
