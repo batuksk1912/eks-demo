@@ -69,32 +69,6 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   authentication_mode = "API_AND_CONFIG_MAP"
-
-  access_entries = {
-    github_actions = {
-      principal_arn     = var.aws_role_arn
-      kubernetes_groups = ["cluster-admins"]
-      username          = "github-actions"
-    }
-  }
-}
-
-resource "kubernetes_cluster_role_binding" "cluster_admins" {
-  metadata {
-    name = "cluster-admins-binding"
-  }
-
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "ClusterRole"
-    name      = "cluster-admin"
-  }
-
-  subject {
-    kind      = "Group"
-    name      = "cluster-admins"
-    api_group = "rbac.authorization.k8s.io"
-  }
 }
 
 ########################  EKS DESCRIPTOR  ########################
