@@ -39,13 +39,6 @@ module "eks" {
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
-  create_aws_auth_configmap = true
-  aws_auth_roles = [{
-    rolearn  = var.aws_role_arn
-    username = "github"
-    groups   = ["system:masters"]
-  }]
-
   eks_managed_node_groups = {
     spot_small = {
       desired_size   = 1
@@ -54,6 +47,22 @@ module "eks" {
       capacity_type  = "SPOT"
     }
   }
+}
+
+############## AWS‑AUTH CONFIGMAP ############
+module "aws_auth" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "20.37.2"
+
+  cluster_name = module.eks.cluster_name
+
+  aws_auth_roles = [
+    {
+      rolearn  = var.aws_role_arn
+      username = "github"
+      groups   = ["system:masters"]
+    }
+  ]
 }
 
 ################ IAM for LB Controller ############
