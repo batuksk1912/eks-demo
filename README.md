@@ -1,6 +1,13 @@
 # EKS Demo: NGINX on AWS EKS via Terraform & Helm
 
-A fully automated, end‑to‑end deployment of a simple containerized service (Bitnami NGINX) to an AWS EKS cluster using Terraform and Helm. The service is exposed via an Application Load Balancer (ALB) with HTTPS termination (ACM certificate) and fronted by a friendly subdomain (`app.baturaykayaturk.com`).
+A fully automated, end‑to‑end deployment of a simple containerized service (NGINX) to an AWS EKS cluster using Terraform and Helm. The service is exposed via an Application Load Balancer (ALB) with HTTPS termination (ACM certificate) and fronted by a friendly subdomain (`app.baturaykayaturk.com`).
+
+---
+
+## 🔗 Link & Repo
+
+- 🌐 **Live service:** [https://app.baturaykayaturk.com](https://app.baturaykayaturk.com)
+- 📂 **GitHub repo:** [https://github.com/batuksk1912/eks-demo](https://github.com/batuksk1912/eks-demo)
 
 ---
 
@@ -64,9 +71,9 @@ A fully automated, end‑to‑end deployment of a simple containerized service (
    --key-schema AttributeName=LockID,KeyType=HASH \
    --billing-mode PAY_PER_REQUEST
 
-Configure GitHub Variables
+### Configure GitHub Variables
 
-In Settings → Actions → Variables:
+- In Settings → Actions → Variables:
 
 ```ini
 AWS_ROLE_ARN    = arn:aws:iam::<ACCOUNT_ID>:role/GitHubActionsOIDC
@@ -75,7 +82,8 @@ TF_STATE_BUCKET = hiive-tfstate-<ACCOUNT_ID>
 TF_STATE_TABLE  = hiive-tf-lock
 ```
 
-3. **Issue an ACM Certificate (ca-central-1)**
+### Issue an ACM Certificate (ca-central-1)
+
 - Domain: app.baturaykayaturk.com
 - Validate via DNS (create GoDaddy CNAME)
 
@@ -115,7 +123,7 @@ TF_STATE_TABLE  = hiive-tf-lock
     curl -I https://app.baturaykayaturk.com
     ```
 
-   ✅ You should see `HTTP/2 200` and the Bitnami NGINX welcome page.
+   ✅ You should see `HTTP 200 or 301` and the NGINX welcome page.
 
 ---
 
@@ -136,8 +144,9 @@ TF_STATE_TABLE  = hiive-tf-lock
 - **GitHub OIDC**  
   No long‑lived AWS keys in GitHub; least‑privilege IAM Role via trust policy.
 
-- **VPC Tagging**  
-  Subnets are auto‑discovered by the ALB controller, ensuring multi‑AZ availability.
+- **GitHub Actions CI/CD**  
+  The .github/workflows/apply.yml runs: terraform init and terraform apply on Git tag push.
+  Fully automates infrastructure provisioning.
 
 ---
 
@@ -216,7 +225,6 @@ TF_STATE_TABLE  = hiive-tf-lock
 ### 🔒 Network Policies
 
 - Enforce network isolation using:
-    - **Calico**
     - Built-in **Kubernetes NetworkPolicies**
 
 ---
@@ -225,15 +233,7 @@ TF_STATE_TABLE  = hiive-tf-lock
 
 - **Image scanning**:
     - **Amazon ECR Image Scan**
-    - **Trivy**
 
 - **Cluster vulnerability scanning**:
     - **Kube Bench**
     - **Kube Hunter**
-
----
-
-## 🔗 Links & Screenshots
-
-- 🌐 **Live service:** [https://app.baturaykayaturk.com](https://app.baturaykayaturk.com)
-- 📂 **GitHub repo:** [https://github.com/batuksk1912/eks-demo](https://github.com/batuksk1912/eks-demo)
